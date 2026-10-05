@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>League of Legends</title>
+</head>
+
+<body>
+  <h1>League of Legends</h1>
+  <p>Discord Activity đang khởi động...</p>
+
+  <script type="module">
+    import { DiscordSDK } from "https://esm.sh/@discord/embedded-app-sdk";
+
+    const discordSdk = new DiscordSDK("1556648763983011860");
+
+    async function start() {
+      try {
+        await discordSdk.ready();
+
+        await discordSdk.commands.setActivity({
+          activity: {
+            type: 0,
+            details: "League of Legends",
+            state: "Summoner's Rift",
+            timestamps: {
+              start: Math.floor(Date.now() / 1000)
+            },
+            assets: {
+              large_image: "lol_large",
+              large_text: "League of Legends",
+              small_image: "lol_small",
+              small_text: "League of Legends"
+            }
+          }
+        });
+
+        console.log("Rich Presence đã được bật!");
+      } catch (error) {
+        console.error("Không thể khởi động Discord Activity:", error);
+      }
+    }
+
+    start();
+  </script>
+</body>
+</html>
