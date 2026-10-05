@@ -1,42 +1,88 @@
-<script type="module">
-  import { DiscordSDK } from "https://esm.sh/@discord/embedded-app-sdk";
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>League of Legends</title>
+</head>
 
-  const discordSdk = new DiscordSDK("1556648763983011860");
+<body style="background:#1e1f22;color:white;font-family:Arial;text-align:center;padding:40px">
 
-  const status = document.querySelector("p");
+  <h1>League of Legends</h1>
+  <p id="status">Đang kết nối Discord...</p>
 
-  async function start() {
-    try {
-      status.textContent = "Đang kết nối Discord...";
+  <script type="module">
+    import { DiscordSDK } from "https://esm.sh/@discord/embedded-app-sdk";
 
-      await discordSdk.ready();
+    const CLIENT_ID = "1556648763983011860";
+    const discordSdk = new DiscordSDK(CLIENT_ID);
+    const status = document.getElementById("status");
 
-      status.textContent = "Đã kết nối Discord, đang bật Rich Presence...";
+    async function start() {
+      try {
+        await discordSdk.ready();
 
-      await discordSdk.commands.setActivity({
-        activity: {
-          type: 0,
-          details: "League of Legends",
-          state: "Summoner's Rift",
-          timestamps: {
-            start: Math.floor(Date.now() / 1000)
+        status.textContent = "Đang xác thực Discord...";
+
+        const { code } = await discordSdk.commands.authorize({
+          client_id: CLIENT_ID,
+          response_type: "code",
+          state: "",
+          prompt: "none",
+          scope: [
+            "identify",
+            "rpc.activities.write"
+          ]
+        });
+
+        const response = await fetch("/api/token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
           },
-          assets: {
-            large_image: "lol_large",
-            large_text: "League of Legends",
-            small_image: "lol_small",
-            small_text: "League of Legends"
-          }
+          body: JSON.stringify({ code })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.access_token) {
+          throw new Error(
+            data.error || "Không lấy được access token"
+          );
         }
-      });
 
-      status.textContent = "🎮 Đang chơi League of Legends";
-    } catch (error) {
-      console.error(error);
-      status.textContent =
-        "❌ Lỗi: " + (error?.message || JSON.stringify(error));
+        await discordSdk.commands.authenticate({
+          access_token: data.access_token
+        });
+
+        await discordSdk.commands.setActivity({
+          activity: {
+            type: 0,
+            details: "League of Legends",
+            state: "Summoner's Rift",
+            timestamps: {
+              start: Math.floor(Date.now() / 1000)
+            },
+            assets: {
+              large_image: "lol_large",
+              large_text: "League of Legends",
+              small_image: "lol_small",
+              small_text: "League of Legends"
+            }
+          }
+        });
+
+        status.textContent = "🎮 Đang chơi League of Legends";
+
+      } catch (error) {
+        console.error(error);
+        status.textContent =
+          "❌ Lỗi: " + (error?.message || String(error));
+      }
     }
-  }
 
-  start();
-</script>
+    start();
+  </script>
+
+</body>
+</html>
